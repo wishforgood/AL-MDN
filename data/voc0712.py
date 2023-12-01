@@ -48,7 +48,7 @@ class VOCAnnotationTransform(object):
             zip(VOC_CLASSES, range(len(VOC_CLASSES))))
         self.keep_difficult = keep_difficult
 
-    def __call__(self, target, width, height):
+    def __call__(self, target, width=1, height=1):
         """
         Arguments:
             target (annotation) : the target annotation to be made usable
@@ -56,7 +56,7 @@ class VOCAnnotationTransform(object):
         Returns:
             a list containing lists of bounding boxes  [bbox coords, class name]
         """
-        res = []
+        res = {}
         for obj in target.iter('object'):
             difficult = int(obj.find('difficult').text) == 1
             if not self.keep_difficult and difficult:
@@ -72,8 +72,8 @@ class VOCAnnotationTransform(object):
                 cur_pt = cur_pt / width if i % 2 == 0 else cur_pt / height
                 bndbox.append(cur_pt)
             label_idx = self.class_to_ind[name]
-            bndbox.append(label_idx)
-            res += [bndbox]
+            res.append({'labels':label_idx})
+            res.append({'boxes':bndbox})
 
         return res
 
@@ -132,8 +132,9 @@ class VOCDetection(data.Dataset):
             target = self.target_transform(target, width, height)
 
         if self.transform is not None:
-            target = np.array(target)
-            img, boxes, labels = self.transform(img, target[:, :4], target[:, 4])
+            target = np.array(target['boxes'])
+            labels = np.array(target['labels'])
+            img, boxes, labels = self.transform(img, target, labels)
             # to rgb
             img = img[:, :, (2, 1, 0)]
             target = np.hstack((boxes, np.expand_dims(labels, axis=1)))

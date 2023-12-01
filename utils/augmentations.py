@@ -83,6 +83,7 @@ class SubtractMeans(object):
 
 class ToAbsoluteCoords(object):
     def __call__(self, image, boxes=None, labels=None):
+        print(image)
         height, width, channels = image.shape
         boxes[:, 0] *= width
         boxes[:, 2] *= width
